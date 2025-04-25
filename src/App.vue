@@ -1,21 +1,13 @@
 <script setup lang="ts">
-import HelloWorld from './components/HelloWorld.vue'
+import { useProductStore } from '@/store/productStore'
+
+const productStore = useProductStore()
 </script>
 
 <template>
   <div>
-    <a href="https://vite.dev" target="_blank">
-      <img src="/vite.svg" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://vuejs.org/" target="_blank">
-      <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
-    </a>
-  </div>
-  <HelloWorld msg="Vite + Vue" />
-
-  <div>
-    <h1>Hello Vite + Vue + Pinia</h1>
-    <CounterTest />
+    <h1>商品管理系統</h1>
+    <router-view />
   </div>
 </template>
 
