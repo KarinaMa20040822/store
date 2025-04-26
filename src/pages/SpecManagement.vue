@@ -44,24 +44,30 @@ function handleImageUpload(specIndex: number, event: Event) {
   }
 }
 
-
-
 // 刪除某個選項
 function deleteOption(specIndex: number, optionIndex: number) {
   specInputs.value[specIndex].options.splice(optionIndex, 1)
 }
+
 function addOption(specIndex: number) {
   const name = newOptionInputs.value[specIndex].trim()
   const image = newOptionImages.value[specIndex]
 
-  if (name) {
-    // 將選項加入指定規格中
-    specInputs.value[specIndex].options.push({ name, image })
+  if (!name) return
 
-    // 清空輸入欄與圖片預覽
-    newOptionInputs.value[specIndex] = ''
-    newOptionImages.value[specIndex] = ''
+  // ✅ 如果是第一組規格（index 0），必須上傳圖片
+  if (specIndex === 0 && !image) {
+    alert('請上傳圖片後再新增選項')
+    return
   }
+
+  specInputs.value[specIndex].options.push({
+    name,
+    image: specIndex === 0 ? image : ''
+  })
+
+  newOptionInputs.value[specIndex] = ''
+  newOptionImages.value[specIndex] = ''
 }
 
 // 計算產品變體組合
@@ -98,8 +104,29 @@ const productVariants = computed(() => {
   }
   return variants
 })
-</script>
 
+// 根據顏色分組產品變體 - 這應該是獨立的計算屬性，不應該在productVariants內部
+const groupedVariants = computed(() => {
+  const result = {}
+  
+  if (!productVariants.value || productVariants.value.length === 0) {
+    return {}
+  }
+  
+  const firstSpecTitle = specInputs.value[0].title
+  
+  productVariants.value.forEach(variant => {
+    const colorKey = variant.specs[firstSpecTitle]
+    if (!result[colorKey]) {
+      result[colorKey] = []
+    }
+    result[colorKey].push(variant)
+  })
+  
+  return result
+})
+
+</script>
 
 <template>
   <div>
@@ -139,8 +166,11 @@ const productVariants = computed(() => {
           <img :src="newOptionImages[specIndex]" style="width: 100%; height: 100%; object-fit: cover; border-radius: 2px;" />
         </div>
 
-        <!-- 上傳圖片按鈕 -->
-        <div style="position: relative; display: inline-block;">
+        <!-- 上傳圖片按鈕：僅限第一組規格 -->
+        <div
+          v-if="specIndex === 0"
+          style="position: relative; display: inline-block;"
+        >
           <input
             type="file"
             :id="'image-upload-' + specIndex"
@@ -186,81 +216,76 @@ const productVariants = computed(() => {
     
     <!-- 產品變體表格 -->
     <div style="margin-top: 2rem; border: 1px solid #eee; border-radius: 4px; overflow: hidden;">
-      
       <table style="width: 100%; border-collapse: collapse;">
-  <thead>
-    <tr style="background-color: #f5f5f5;">
-      <!-- 圖片欄 -->
-      <th style="padding: 0.5rem; text-align: center; border-bottom: 1px solid #eee;">圖片</th>
+        <thead>
+          <tr style="background-color: #f5f5f5;">
+            <!-- 圖片欄 -->
+            <th style="padding: 0.5rem; text-align: center; border-bottom: 1px solid #eee;">
+              <span style="font-size: large;"></span>產品圖片</th>
+            <!-- 規格欄 1 -->
+            <th v-if="specInputs.length > 0" style="padding: 0.5rem; text-align: center; border-bottom: 1px solid #eee;">
+              <span style="color: #ff5722; font-size: large;">●</span>{{ specInputs[0].title || '規格 1' }}
+            </th>
 
-      <!-- 規格欄 1 -->
-      <th v-if="specInputs.length > 0" style="padding: 0.5rem; text-align: center; border-bottom: 1px solid #eee;">
-        <span style="color: #ff5722;">●</span> {{ specInputs[0].title || '規格 1' }}
-      </th>
+            <!-- 規格欄 2 -->
+            <th v-if="specInputs.length > 1" style="padding: 0.5rem; text-align: center; border-bottom: 1px solid #eee;">
+              <span style="color: #ff5722; font-size: large;">●</span> {{ specInputs[1].title || '規格 2' }}
+            </th>
 
-      <!-- 規格欄 2 -->
-      <th v-if="specInputs.length > 1" style="padding: 0.5rem; text-align: center; border-bottom: 1px solid #eee;">
-        <span style="color: #ff5722;">●</span> {{ specInputs[1].title || '規格 2' }}
-      </th>
+            <!-- 價格與數量欄 -->
+            <th style="padding: 0.5rem; text-align: center; border-bottom: 1px solid #eee; width: 25%; ">
+              <span style="color: #ff5722;" font-size: large;>*</span> 價錢
+            </th>
+            <th style="padding: 0.5rem; text-align: center; border-bottom: 1px solid #eee; width: 25%; font-size: large;">商品數量</th>
+          </tr>
+        </thead>
 
-      <!-- 價格與數量欄 -->
-      <th style="padding: 0.5rem; text-align: center; border-bottom: 1px solid #eee;">
-        <span style="color: #ff5722;">*</span> 價錢
-      </th>
-      <th style="padding: 0.5rem; text-align: center; border-bottom: 1px solid #eee;">商品數量</th>
-    </tr>
-  </thead>
+        <tbody>
+          <template v-for="(colorGroup, colorName, colorIndex) in groupedVariants" :key="colorName">
+            <tr v-for="(variant, variantIndex) in colorGroup" :key="`${colorName}-${variantIndex}`" style="border-bottom: 1px solid #eee;">
+              <!-- 圖片欄 - 只在每個顏色的第一行顯示 -->
+              <td v-if="variantIndex === 0" :rowspan="colorGroup.length" style="padding: 0.5rem; text-align: center; vertical-align: middle;">
+                <div v-if="variant.image" style="width: 50px; height: 50px; margin: auto;">
+                  <img :src="variant.image" style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;" />
+                </div>
+                <div v-else style="color: #aaa;">無</div>
+              </td>
 
-  <tbody>
-    <tr
-      v-for="(variant, index) in productVariants"
-      :key="index"
-      style="border-bottom: 1px solid #eee;"
-    >
-      <!-- 縮圖欄 -->
-      <td style="padding: 0.5rem; text-align: center;">
-        <div v-if="variant.image" style="width: 40px; height: 40px; margin: auto;">
-          <img :src="variant.image" style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;" />
-        </div>
-        <div v-else style="color: #aaa;">無</div>
-      </td>
+              <!-- 規格1 (顏色) -->
+              <td v-if="variantIndex === 0" :rowspan="colorGroup.length" style="padding: 0.5rem; text-align: center; vertical-align: middle;">
+                {{ colorName }}
+              </td>
 
-      <!-- 規格 1 名稱（顏色等） -->
-      <td style="padding: 0.5rem; text-align: center;">
-        {{ variant.specs[specInputs[0].title] }}
-      </td>
+              <!-- 規格2 (尺寸) -->
+              <td v-if="specInputs.length > 1" style="padding: 0.5rem; text-align: center; vertical-align: middle;">
+                {{ variant.specs[specInputs[1].title] }}
+              </td>
 
-      <!-- 規格 2 名稱（尺寸等） -->
-      <td style="padding: 0.5rem; text-align: center;" v-if="specInputs.length > 1">
-        {{ variant.specs[specInputs[1].title] }}
-      </td>
+              <!-- 價格 -->
+              <td style="padding: 0.5rem; vertical-align: middle;">
+                <div style="display: flex; align-items: center;">
+                  <span style="margin-right: 0.25rem;">NT$</span>
+                  <input
+                    type="text"
+                    v-model="variant.price"
+                    style="width: 100%; padding: 0.3rem; border: 1px solid #ddd; border-radius: 4px;"
+                  />
+                </div>
+              </td>
 
-      <!-- 價格欄 -->
-      <td style="padding: 0.5rem;">
-        <div style="display: flex; align-items: center;">
-          <span style="margin-right: 0.25rem;">NT$</span>
-          <input
-            type="text"
-            v-model="variant.price"
-            style="width: 100%; padding: 0.3rem; border: 1px solid #ddd; border-radius: 4px;"
-          />
-        </div>
-      </td>
-
-      <!-- 數量欄 -->
-      <td style="padding: 0.5rem;">
-        <input
-          type="number"
-          v-model="variant.stock"
-          min="0"
-          style="width: 100%; padding: 0.3rem; border: 1px solid #ddd; border-radius: 4px;"
-        />
-      </td>
-    </tr>
-  </tbody>
-</table>
-
-      
+              <!-- 數量 -->
+              <td style="padding: 0.5rem; vertical-align: middle;">
+                <input
+                  type="number"
+                  v-model="variant.stock"
+                  min="0"
+                  style="width: 100%; padding: 0.3rem; border: 1px solid #ddd; border-radius: 4px;"
+                />
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
     </div>
   </div>
 </template>

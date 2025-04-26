@@ -6,7 +6,7 @@ const productStore = useProductStore()
 
 <template>
   <div>
-    <h1>商品管理系統</h1>
+    <h1></h1>
     <router-view />
   </div>
 </template>
