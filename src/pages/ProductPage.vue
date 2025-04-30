@@ -171,7 +171,7 @@ function addToCart() {
         <!-- 右邊資訊區 -->
         <div class="product-info-section">
           <h2 class="product-name">
-            {{ store.product?.name || "前端測試商品" }}
+            {{ store.product?.name || productName.value }}
           </h2>
           <h1 class="product-price">{{ displayPrice }}</h1>
 

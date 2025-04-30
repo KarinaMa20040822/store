@@ -124,8 +124,11 @@ const groupedVariants = computed(() => {
   return result;
 });
 
-// 儲存到 Pinia
+const productName = ref("");
+
+// 更新儲存函式
 function saveSpecsToStore() {
+  store.setProduct({ name: productName.value });
   store.setSpecs(specInputs.value);
   store.setVariants(productVariants.value);
   alert("已成功儲存！");
@@ -135,8 +138,24 @@ function saveSpecsToStore() {
 <template>
   <div>
     <h2>規格管理頁</h2>
+    <div style="margin-bottom: 1rem">
+      <label for="productName">產品名稱：</label>
+      <input
+        id="productName"
+        v-model="productName"
+        placeholder="請輸入產品名稱"
+        style="
+          padding: 0.5rem;
+          width: 100%;
+          max-width: 400px;
+          border: 1px solid #ccc;
+          border-radius: 4px;
+        "
+      />
+    </div>
 
     <!-- 👇包住所有規格 -->
+
     <div
       v-for="(spec, specIndex) in specInputs"
       :key="specIndex"
