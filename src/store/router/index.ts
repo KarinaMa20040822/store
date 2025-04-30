@@ -1,10 +1,13 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Home from '@/pages/Home.vue'
 import SpecManagement from '@/pages/SpecManagement.vue'
+import ProductPage from '@/pages/ProductPage.vue'
+
 
 const routes = [
   { path: '/', component: Home },
-  { path: '/specs', component: SpecManagement },
+  { path: '/specsmanagement', component: SpecManagement },
+  {path: '/productpage',component: ProductPage },
 ]
 
 const router = createRouter({

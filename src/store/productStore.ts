@@ -1,44 +1,87 @@
-import { defineStore } from 'pinia'
+import { defineStore } from "pinia";
 
-export type SpecOption = {
-  name: string
-  image?: string
+// 規格選項介面
+export interface SpecOption {
+  name: string;
+  image?: string; // 為圖片 URL
+  price?: number;
+  stock?: number;
 }
 
-export type Spec = {
-  title: string
-  options: SpecOption[]
+// 規格介面
+export interface Spec {
+  title: string;
+  options: SpecOption[];
 }
 
-export type ProductVariant = {
-  id: string
-  spec1: string
-  spec2?: string
-  quantity: number
+// 變體介面
+export interface Variant {
+  specs: Record<string, string>;
+  image: string; // 圖片 URL
+  price: number;
+  stock: number;
 }
 
-export const useProductStore = defineStore('product', {
+// 產品介面
+export interface Product {
+  id?: string;
+  name: string;
+  description?: string;
+}
+
+export const useProductStore = defineStore("product", {
   state: () => ({
+    product: null as Product | null,
     specs: [] as Spec[],
-    variants: [] as ProductVariant[],
+    variants: [] as Variant[],
   }),
 
   actions: {
-    addSpec(spec: Spec) {
-      this.specs.push(spec)
+    // 設置產品基本資料
+    setProduct(product: Product) {
+      this.product = product;
+      console.log("設置產品到商店:", product);
     },
 
     setSpecs(specs: Spec[]) {
-      this.specs = specs
+      // 移除 base64，只保留圖片 URL
+      this.specs = specs.map((spec) => ({
+        ...spec,
+        options: spec.options.map((option) => ({
+          ...option,
+          image: option.image,
+        })),
+      }));
+      console.log("設置規格到商店:", this.specs);
+      this.manualSaveToLocalStorage();
     },
 
-    setVariants(variants: ProductVariant[]) {
-      this.variants = variants
+    // 設置變體（只保留圖片 URL）
+
+    setVariants(variants: Variant[]) {
+      this.variants = variants.map((v) => ({
+        ...v,
+        image: v.image?.startsWith("data:image/") ? "" : v.image,
+        price: typeof v.price === "string" ? parseFloat(v.price) || 0 : v.price,
+      }));
+      console.log("設置變體到商店:", this.variants);
+      this.manualSaveToLocalStorage();
     },
 
-    updateVariantQuantity(id: string, newQty: number) {
-      const variant = this.variants.find(v => v.id === id)
-      if (variant) variant.quantity = newQty
+    // 清空商店與 localStorage
+    clearStore() {
+      this.product = null;
+      this.specs = [];
+      this.variants = [];
+      console.log("✅ 商店已清空");
+      localStorage.removeItem("product-store");
     },
   },
-})
+
+  // pinia-plugin-persistedstate 設定
+  persist: {
+    storage: localStorage,
+    key: "product-store",
+    paths: ["product", "specs", "variants"],
+  },
+});
