@@ -53,7 +53,6 @@ export const useProductStore = defineStore("product", {
         })),
       }));
       console.log("設置規格到商店:", this.specs);
-      this.manualSaveToLocalStorage();
     },
 
     // 設置變體（只保留圖片 URL）
@@ -65,7 +64,6 @@ export const useProductStore = defineStore("product", {
         price: typeof v.price === "string" ? parseFloat(v.price) || 0 : v.price,
       }));
       console.log("設置變體到商店:", this.variants);
-      this.manualSaveToLocalStorage();
     },
 
     // 清空商店與 localStorage
