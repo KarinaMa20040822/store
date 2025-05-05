@@ -45,8 +45,6 @@ function handleImageError(event: Event) {
   <div class="page-title">
     <h2>首頁</h2>
   </div>
-
-  <!-- 👉 新增按鈕，靠右對齊 -->
   <div class="specmanagement-button-wrapper">
     <button class="specmanagement-button" @click="goToSpecManagement">
       規格管理頁面
@@ -76,13 +74,12 @@ function handleImageError(event: Event) {
       </div>
     </div>
   </div>
-
-  <div v-if="productList.length === 0" class="no-products">
-    <p>沒有找到相關商品</p>
-  </div>
 </template>
 
 <style>
+body {
+  background-color: #f0f0f0;
+}
 .page-title {
   text-align: center;
 }

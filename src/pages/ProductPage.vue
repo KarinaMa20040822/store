@@ -2,51 +2,41 @@
 import { ref, computed, onMounted } from "vue";
 import { useProductStore } from "@/store/productStore";
 
-// 取得 Pinia store
 const store = useProductStore();
 
-// 預設選取的規格
 const selectedSpec1 = ref("");
 const selectedSpec2 = ref("");
 const quantity = ref(1);
 
-// 主圖片（初始化）
 const mainImage = ref("");
 
-// 在組件掛載時確保數據已加載
 onMounted(() => {
   console.log("ProductPage 掛載時的 store 資料:", {
     specs: store.specs,
     variants: store.variants,
   });
 
-  // 如果沒有資料，可以嘗試從 localStorage 直接讀取
   if (store.specs.length === 0) {
     const storedData = localStorage.getItem("product-store");
     console.log("從 localStorage 讀取的資料:", storedData);
   }
-  // 初始化主圖片 - 確保有規格數據才設置
   if (store.specs.length > 0 && store.specs[0].options.length > 0) {
     mainImage.value = store.specs[0].options[0].image || "";
   }
 });
 
-// 取得規格標題（顏色/尺寸）
 const colorTitle = computed(() => store.specs[0]?.title || "");
 const sizeTitle = computed(() => store.specs[1]?.title || "");
 
-// 根據選取規格找出商品變體
 const currentVariant = computed(() => {
   if (!selectedSpec1.value) return null;
 
-  // 如果只有一種規格
   if (!sizeTitle.value || !selectedSpec2.value) {
     return store.variants.find(
       (variant) => variant.specs[colorTitle.value] === selectedSpec1.value
     );
   }
 
-  // 如果有兩種規格
   return store.variants.find((variant) => {
     const matchColor = variant.specs[colorTitle.value] === selectedSpec1.value;
     const matchSize = variant.specs[sizeTitle.value] === selectedSpec2.value;
@@ -54,31 +44,26 @@ const currentVariant = computed(() => {
   });
 });
 
-// 顯示價格
 const displayPrice = computed(() => {
   return currentVariant.value
     ? `NT$ ${currentVariant.value.price}`
     : "請選擇規格";
 });
 
-// 計算庫存剩餘
 const stockLeft = computed(() => {
   return currentVariant.value ? currentVariant.value.stock : 0;
 });
 
-// 選擇顏色
 function selectSpec1(optionName: string, image?: string) {
   selectedSpec1.value = optionName;
-  selectedSpec2.value = ""; // 重選顏色時，重置尺寸
+  selectedSpec2.value = "";
   if (image) mainImage.value = image;
 }
 
-// 選擇尺寸
 function selectSpec2(optionName: string) {
   selectedSpec2.value = optionName;
 }
 
-// 增減數量
 function decreaseQuantity() {
   if (quantity.value > 1) quantity.value--;
 }
@@ -87,7 +72,6 @@ function increaseQuantity() {
   if (quantity.value < stockLeft.value) quantity.value++;
 }
 
-// 獲取顏色對應的總庫存
 function getColorStock(optionName: string) {
   if (!colorTitle.value || store.variants.length === 0) return 0;
 
@@ -96,7 +80,6 @@ function getColorStock(optionName: string) {
     .reduce((total, variant) => total + (variant.stock || 0), 0);
 }
 
-// 獲取尺寸對應的庫存（根據已選擇的顏色）
 function getSizeStock(optionName: string) {
   if (!sizeTitle.value || !selectedSpec1.value || store.variants.length === 0)
     return 0;
@@ -125,12 +108,9 @@ function addToCart() {
 </script>
 
 <template>
-  <!-- 外層容器，用於垂直居中和水平居中 -->
   <div class="product-container">
-    <!-- 商品內容框 -->
     <div class="page-title"><h2>商品頁面</h2></div>
     <div class="product-wrapper">
-      <!-- 調試信息 -->
       <div class="debug-info">
         <div>規格數量: {{ store.specs.length }}</div>
         <div>變體數量: {{ store.variants.length }}</div>
@@ -140,9 +120,7 @@ function addToCart() {
         }}</pre>
       </div>
 
-      <!-- 商品主要內容 -->
       <div class="product-content">
-        <!-- 左邊圖片區 -->
         <div class="product-image-section">
           <div class="main-image-container">
             <img
@@ -168,14 +146,12 @@ function addToCart() {
           </div>
         </div>
 
-        <!-- 右邊資訊區 -->
         <div class="product-info-section">
           <h2 class="product-name">
-            {{ store.product?.name || productName.value }}
+            {{ store.product?.name || "未命名商品" }}
           </h2>
           <h1 class="product-price">{{ displayPrice }}</h1>
 
-          <!-- 規格一：顏色 -->
           <div v-if="store.specs.length > 0" class="spec-section">
             <div class="spec-title">{{ colorTitle || "顏色" }}</div>
             <div class="spec-options">
@@ -200,7 +176,6 @@ function addToCart() {
             </div>
           </div>
 
-          <!-- 規格二：尺寸 -->
           <div v-if="store.specs.length > 1" class="spec-section">
             <div class="spec-title">{{ sizeTitle || "尺寸" }}</div>
             <div class="spec-options">
@@ -221,7 +196,6 @@ function addToCart() {
             </div>
           </div>
 
-          <!-- 數量選擇 -->
           <div class="quantity-section">
             <span>數量</span>
             <div class="quantity-control">
@@ -244,7 +218,6 @@ function addToCart() {
             <span class="stock-info">剩餘：{{ stockLeft }} 件</span>
           </div>
 
-          <!-- 加入購物車按鈕 -->
           <button
             @click="addToCart"
             :disabled="!currentVariant || stockLeft <= 0"
@@ -260,14 +233,12 @@ function addToCart() {
 </template>
 
 <style scoped>
-/* 全局樣式重置，確保元素不會有額外寬度溢出 */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
   max-width: 100%;
 }
-/* 全域容器樣式 */
 .product-container {
   display: block;
   justify-content: center;
@@ -279,7 +250,6 @@ function addToCart() {
   overflow-x: hidden;
 }
 
-/* 商品內容包裝器 */
 .product-wrapper {
   max-width: 1200px;
   width: 100%;
@@ -291,7 +261,6 @@ function addToCart() {
   box-sizing: border-box;
 }
 
-/* 調試信息 */
 .debug-info {
   position: fixed;
   top: 10px;
@@ -304,7 +273,6 @@ function addToCart() {
   display: none;
 }
 
-/* 商品主體內容佈局 */
 .product-content {
   display: flex;
   gap: 40px;
@@ -313,7 +281,6 @@ function addToCart() {
   box-sizing: border-box;
 }
 
-/* 左側圖片區域 */
 .product-image-section {
   flex: 1;
   min-width: 300px;
@@ -369,7 +336,6 @@ function addToCart() {
   border: 2px solid #ff5722;
 }
 
-/* 右側資訊區域 */
 .product-info-section {
   flex: 1;
   min-width: 300px;
@@ -388,7 +354,6 @@ function addToCart() {
   font-weight: bold;
 }
 
-/* 規格選擇區 */
 .spec-section {
   margin-bottom: 20px;
 }
@@ -440,7 +405,6 @@ function addToCart() {
   border-radius: 2px;
 }
 
-/* 數量選擇區 */
 .quantity-section {
   display: flex;
   align-items: center;
@@ -486,7 +450,6 @@ function addToCart() {
   font-size: 14px;
 }
 
-/* 加入購物車按鈕 */
 .add-to-cart-button {
   padding: 12px 30px;
   background-color: #ff5722;
@@ -512,7 +475,6 @@ function addToCart() {
   cursor: not-allowed;
 }
 
-/* 響應式設計 */
 @media (max-width: 1024px) {
   .product-container {
     padding: 15px;

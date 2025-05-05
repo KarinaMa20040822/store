@@ -2,27 +2,21 @@
 import { ref, computed, watch } from "vue";
 import { useProductStore, Spec } from "@/store/productStore";
 
-// 取得 Pinia store
 const store = useProductStore();
 
-// 限制兩組規格
 const specInputs = ref<Spec[]>([{ title: "", options: [] }]);
 
-// 每組規格的暫存輸入值（文字和圖片）
 const newOptionInputs = ref<string[]>([""]);
 const newOptionImages = ref<string[]>([""]);
 
-// 每組規格的標題是否正在編輯
 const editingSpecTitle = ref<boolean[]>([true]);
 
-// 當新增規格時，更新對應的輸入欄位與編輯狀態
 watch(specInputs, (newVal) => {
   editingSpecTitle.value = newVal.map(() => false);
   newOptionInputs.value = newVal.map(() => "");
   newOptionImages.value = newVal.map(() => "");
 });
 
-// 新增一組規格（最多 2 組）
 function addSpec() {
   if (specInputs.value.length < 2) {
     specInputs.value.push({ title: "", options: [] });
@@ -31,18 +25,15 @@ function addSpec() {
   }
 }
 
-// 上傳圖片
 function handleImageUpload(specIndex: number, event: Event) {
   const target = event.target as HTMLInputElement;
   if (target.files && target.files[0]) {
     const file = target.files[0];
-    // ✅ 使用 Object URL
     const imageUrl = URL.createObjectURL(file);
     newOptionImages.value[specIndex] = imageUrl;
   }
 }
 
-// 新增一個選項
 function addOption(specIndex: number) {
   const name = newOptionInputs.value[specIndex].trim();
   const image = newOptionImages.value[specIndex];
@@ -50,7 +41,7 @@ function addOption(specIndex: number) {
   if (!name) return;
 
   if (specIndex === 0 && !image) {
-    alert("請上傳圖片後再新增選項");
+    alert("請先上傳圖片後再新增選項");
     return;
   }
 
@@ -63,12 +54,10 @@ function addOption(specIndex: number) {
   newOptionImages.value[specIndex] = "";
 }
 
-// 刪除某個選項
 function deleteOption(specIndex: number, optionIndex: number) {
   specInputs.value[specIndex].options.splice(optionIndex, 1);
 }
 
-// 計算產品變體組合
 const productVariants = computed(() => {
   if (
     specInputs.value.length === 0 ||
@@ -105,7 +94,6 @@ const productVariants = computed(() => {
   return variants;
 });
 
-// 根據第一組規格 (顏色) 分組產品變體
 const groupedVariants = computed(() => {
   const result: Record<string, typeof productVariants.value> = {};
 
@@ -126,7 +114,6 @@ const groupedVariants = computed(() => {
 
 const productName = ref("");
 
-// 更新儲存函式
 function saveSpecsToStore() {
   store.setProduct({ name: productName.value });
   store.setSpecs(specInputs.value);
@@ -154,8 +141,6 @@ function saveSpecsToStore() {
       />
     </div>
 
-    <!-- 👇包住所有規格 -->
-
     <div
       v-for="(spec, specIndex) in specInputs"
       :key="specIndex"
@@ -167,7 +152,6 @@ function saveSpecsToStore() {
         border-radius: 4px;
       "
     >
-      <!-- 規格標題與筆編輯 -->
       <div
         style="
           display: flex;
@@ -208,7 +192,6 @@ function saveSpecsToStore() {
         </div>
       </div>
 
-      <!-- 新增選項區塊 -->
       <div
         style="
           display: flex;
@@ -217,7 +200,6 @@ function saveSpecsToStore() {
           margin-bottom: 1rem;
         "
       >
-        <!-- 預覽縮圖 -->
         <div
           v-if="newOptionImages[specIndex]"
           style="width: 30px; height: 30px"
@@ -233,7 +215,6 @@ function saveSpecsToStore() {
           />
         </div>
 
-        <!-- 上傳圖片按鈕：僅限第一組規格 -->
         <div
           v-if="specIndex === 0"
           style="position: relative; display: inline-block"
@@ -247,7 +228,6 @@ function saveSpecsToStore() {
           <button type="button">上傳圖片</button>
         </div>
 
-        <!-- 選項名稱 -->
         <input
           v-model="newOptionInputs[specIndex]"
           placeholder="請輸入選項名稱"
@@ -256,7 +236,6 @@ function saveSpecsToStore() {
         <button @click="addOption(specIndex)">新增選項</button>
       </div>
 
-      <!-- 已添加的選項列表（單一區塊樣式） -->
       <div
         style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem"
       >
@@ -302,7 +281,6 @@ function saveSpecsToStore() {
       </div>
     </div>
 
-    <!-- 新增規格按鈕 -->
     <div v-if="specInputs.length < 2" style="margin-bottom: 2rem">
       <button
         @click="addSpec"
@@ -316,8 +294,6 @@ function saveSpecsToStore() {
         新增一組規格
       </button>
     </div>
-
-    <!-- 產品變體表格 -->
     <div
       style="
         margin-top: 2rem;
@@ -328,8 +304,7 @@ function saveSpecsToStore() {
     >
       <table style="width: 100%; border-collapse: collapse">
         <thead>
-          <tr style="background-color: #f5f5f5">
-            <!-- 圖片欄 -->
+          <tr style="background-color: white">
             <th
               style="
                 padding: 0.5rem;
@@ -339,7 +314,6 @@ function saveSpecsToStore() {
             >
               <span style="font-size: large"></span>產品圖片
             </th>
-            <!-- 規格欄 1 -->
             <th
               v-if="specInputs.length > 0"
               style="
@@ -352,7 +326,6 @@ function saveSpecsToStore() {
               >{{ specInputs[0].title || "規格 1" }}
             </th>
 
-            <!-- 規格欄 2 -->
             <th
               v-if="specInputs.length > 1"
               style="
@@ -365,7 +338,6 @@ function saveSpecsToStore() {
               {{ specInputs[1].title || "規格 2" }}
             </th>
 
-            <!-- 價格與數量欄 -->
             <th
               style="
                 padding: 0.5rem;
@@ -400,7 +372,6 @@ function saveSpecsToStore() {
               :key="`${colorName}-${variantIndex}`"
               style="border-bottom: 1px solid #eee"
             >
-              <!-- 圖片欄 - 只在每個顏色的第一行顯示 -->
               <td
                 v-if="variantIndex === 0"
                 :rowspan="colorGroup.length"
@@ -440,7 +411,6 @@ function saveSpecsToStore() {
                 {{ colorName }}
               </td>
 
-              <!-- 規格2 (尺寸) -->
               <td
                 v-if="specInputs.length > 1"
                 style="
@@ -452,7 +422,6 @@ function saveSpecsToStore() {
                 {{ variant.specs[specInputs[1].title] }}
               </td>
 
-              <!-- 價格 -->
               <td style="padding: 0.5rem; vertical-align: middle">
                 <div style="display: flex; align-items: center">
                   <span style="margin-right: 0.25rem">NT$</span>
@@ -469,7 +438,6 @@ function saveSpecsToStore() {
                 </div>
               </td>
 
-              <!-- 數量 -->
               <td style="padding: 0.5rem; vertical-align: middle">
                 <input
                   type="number"
@@ -493,7 +461,7 @@ function saveSpecsToStore() {
         @click="saveSpecsToStore"
         style="
           padding: 0.5rem 1rem;
-          background-color: #4caf50;
+          background-color: #e48a52;
           color: white;
           border: none;
           border-radius: 4px;
@@ -504,3 +472,8 @@ function saveSpecsToStore() {
     </div>
   </div>
 </template>
+<style>
+body {
+  background-color: #ffffff;
+}
+</style>
